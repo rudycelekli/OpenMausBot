@@ -1,7 +1,7 @@
 // A macOS app launched from Finder inherits a bare PATH (no ~/.local/bin, /opt/homebrew/bin or nvm/volta/asdf shims),
 // so every agent CLI spawn goes through augmentedPath().
 import { execFile } from "node:child_process";
-import { closeSync, existsSync, openSync, readFileSync, readSync, statSync, readdirSync } from "node:fs";
+import { accessSync, constants, closeSync, existsSync, openSync, readFileSync, readSync, statSync, readdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, delimiter, dirname, extname, join } from "node:path";
 
@@ -168,7 +168,7 @@ export function findCliCandidates(name: string, path: string = augmentedPath()):
     if (!dir) continue;
     for (const ext of exts) {
       const p = join(dir, name + ext);
-      if (existsSync(p)) {
+      if (isRunnableFile(p)) {
         out.push(p);
         break;
       }
@@ -212,6 +212,17 @@ export function splitCliString(cli: string): string[] {
 function isFile(p: string): boolean {
   try {
     return statSync(p, { throwIfNoEntry: false })?.isFile() ?? false;
+  } catch {
+    return false;
+  }
+}
+
+function isRunnableFile(p: string): boolean {
+  if (!isFile(p)) return false;
+  if (process.platform === "win32") return true;
+  try {
+    accessSync(p, constants.X_OK);
+    return true;
   } catch {
     return false;
   }
