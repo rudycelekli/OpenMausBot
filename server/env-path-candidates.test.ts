@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -25,7 +25,7 @@ describe("CLI candidates follow executable PATH lookup", () => {
     const runnable = join(base, "runnable");
     mkdirSync(join(shadow, name), { recursive: true });
     const real = executable(runnable, name);
-    expect(findCliCandidates("probe", [shadow, runnable].join(delimiter))).toEqual([real]);
+    expect(findCliCandidates("probe", [shadow, runnable].join(delimiter)).map(path => realpathSync(path))).toEqual([realpathSync(real)]);
   });
 
   it.skipIf(process.platform === "win32")("skips non-executable files just as a native spawn does", () => {
