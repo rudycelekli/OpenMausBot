@@ -370,7 +370,7 @@ function preload(origin, { home = false, activation = false } = {}) {
   return { bridge, invoked, synced };
 }
 
-test("My Cloud's own page, once it is home, gets this app's chat links, Settings key, diagnostics and its session renewal; any other server's page doesn't", async () => {
+test("My Cloud's own page gets fixed home actions and diagnostics; other server pages receive only generic Preferences", async () => {
   const keys = ["home", "onChatLink", "onPackageInstall", "onOpenAppSettings", "exportDiagnostics", "openLogsFolder"];
   const home = preload(CLOUD, { home: true });
   for (const key of keys) assert.ok(home.bridge[key], key);
@@ -385,7 +385,8 @@ test("My Cloud's own page, once it is home, gets this app's chat links, Settings
   await clicked.bridge.home.signIn(); await clicked.bridge.cloudPlan.signIn();
   assert.deepEqual([...home.invoked, ...clicked.invoked].map(([channel]) => channel), ["home:repair", "home:sign-in", "home:sign-in"]);
   const other = preload("https://bots.example.test", { home: false });
-  for (const key of keys) assert.equal(other.bridge[key], undefined, key);
+  for (const key of keys.filter(key => key !== "onOpenAppSettings")) assert.equal(other.bridge[key], undefined, key);
+  assert.equal(typeof other.bridge.onOpenAppSettings, "function");
   const local = preload(LOCAL);
   for (const key of keys) assert.ok(local.bridge[key], key);
   assert.equal(local.synced.includes("home:page"), false, "this computer's page never needs to ask");

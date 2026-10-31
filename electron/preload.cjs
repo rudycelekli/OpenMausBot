@@ -585,7 +585,11 @@ const bridge = {
   },
 };
 
-contextBridge.exposeInMainWorld(
-  "ogb",
-  isLocalPage ? bridge : Object.fromEntries(Object.entries(bridge).filter(([key]) => remoteKeys.has(key))),
-);
+const exposedBridge = isLocalPage ? bridge : Object.fromEntries(Object.entries(bridge).filter(([key]) => remoteKeys.has(key)));
+if (!isLocalPage && !onHomePage) {
+  // Ordinary server pages receive Preferences, never the fixed organization or Cloud actions.
+  exposedBridge.onOpenAppSettings = (cb) => bridge.onOpenAppSettings((section) => {
+    if (section === undefined) cb();
+  });
+}
+contextBridge.exposeInMainWorld("ogb", exposedBridge);
