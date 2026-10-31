@@ -98,7 +98,7 @@ function isOpenRouterUrl(url: string): boolean {
 function loopbackLmStudioV1Url(baseUrl: string): string | null {
   try {
     const url = new URL(baseUrl);
-    const host = url.hostname.toLowerCase();
+    const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
     if (host !== "127.0.0.1" && host !== "localhost" && host !== "::1") return null;
     if (url.pathname.replace(/\/+$/, "") !== "/v1") return null;
     return `${url.origin}/api/v1/models`;
