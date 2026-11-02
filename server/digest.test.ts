@@ -124,6 +124,11 @@ describe("buildTurnDigest", () => {
     expect(long.reply).toHaveLength(200);
   });
 
+  it("never cuts the reply inside an emoji", () => {
+    const d = buildTurnDigest({ ...base, reply: `${"x".repeat(199)}🎉 done`, activities: [], memory: [] });
+    expect(d.reply).toBe("x".repeat(199));
+  });
+
   it("masks a credential the reply repeats, as the stored reply is masked", () => {
     const secret = `${"whsec" + "_"}${"a1B2c3D4".repeat(5)}`;
     const d = buildTurnDigest({ ...base, activities: [], memory: [], reply: `Connected the watcher to http://127.0.0.1:8800/hooks/wh_abc/${secret}. Done.` });

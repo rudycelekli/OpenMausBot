@@ -99,7 +99,8 @@ function firstSentence(reply: string): string {
   const flat = reply.replace(/\s+/g, " ").trim();
   const end = flat.search(/[.!?](\s|$)/);
   const sentence = end === -1 ? flat : flat.slice(0, end + 1);
-  return sentence.slice(0, REPLY_CHARS);
+  const clipped = sentence.slice(0, REPLY_CHARS);
+  return /[\ud800-\udbff]$/.test(clipped) ? clipped.slice(0, -1) : clipped;
 }
 
 export function renderDigest(d: TurnDigest): string {
