@@ -72,13 +72,14 @@ export function parseMoves(text: string, candidates: readonly MemoryEntryLine[])
 }
 
 export function applyMoves(text: string, moves: readonly TopicMove[]): { text: string; byTopic: Map<string, { lines: string[]; aliases: string[] }> } {
-  const drop = new Set(moves.map((move) => move.entry.line));
+  const lines = text.split("\n");
+  const drop = new Set(moves.flatMap((move) => Array.from({ length: move.entry.end - move.entry.line }, (_, offset) => move.entry.line + offset)));
   const byTopic = new Map<string, { lines: string[]; aliases: string[] }>();
   for (const move of moves) {
     const group = byTopic.get(move.topic) ?? { lines: [], aliases: [] };
-    group.lines.push(move.entry.raw);
+    group.lines.push(lines.slice(move.entry.line, move.entry.end).join("\n"));
     for (const alias of move.aliases) if (!group.aliases.includes(alias)) group.aliases.push(alias);
     byTopic.set(move.topic, group);
   }
-  return { text: text.split("\n").filter((_, index) => !drop.has(index)).join("\n"), byTopic };
+  return { text: lines.filter((_, index) => !drop.has(index)).join("\n"), byTopic };
 }

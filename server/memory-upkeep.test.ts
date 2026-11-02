@@ -205,6 +205,15 @@ describe("organizing MEMORY.md", () => {
     expect(left).toBe("- 2026-09-26 · A\n- 2026-09-20 · Trip · until 2026-09-21\n");
     expect(byTopic.get("x.md")).toEqual({ lines: ["- 2026-09-26 · B"], aliases: ["q"] });
   });
+
+  it("moves an entry with lines under it whole, leaving none of them behind", () => {
+    const text = ["# Memory", "- 2026-09-20 · Likes tea", "- 2026-09-26 · Deploy the API with:", "  ```sh", "  railway up", "  ```", "- 2026-09-26 · Lives in Pune", ""].join("\n");
+    const candidates = organizeCandidates(text, TODAY, new Set());
+    const deploy = candidates.findIndex((e) => e.body === "Deploy the API with:");
+    const { text: left, byTopic } = applyMoves(text, parseMoves(`{"moves":[{"i":${deploy},"topic":"api"}]}`, candidates)!);
+    expect(left).toBe("# Memory\n- 2026-09-20 · Likes tea\n- 2026-09-26 · Lives in Pune\n");
+    expect(byTopic.get("api.md")?.lines).toEqual(["- 2026-09-26 · Deploy the API with:\n  ```sh\n  railway up\n  ```"]);
+  });
 });
 
 describe("topic files the bot keeps", () => {
