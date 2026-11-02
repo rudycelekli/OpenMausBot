@@ -193,6 +193,14 @@ describe("grokExportToPackage", () => {
     expect(routine("Every day at 6pm")).toEqual({ type: "daily", time: "18:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
     expect(routine("Tuesdays and Thursdays at 07:15")).toEqual({ type: "daily", time: "07:15", weekdays: [2, 4] });
     expect(routine("weekends at noon")).toEqual({ type: "daily", time: "12:00", weekdays: [0, 6] });
+    expect(routine("Every evening at 7")).toEqual({ type: "daily", time: "19:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("Weekdays in the afternoon at 3:30")).toEqual({ type: "daily", time: "15:30", weekdays: [1, 2, 3, 4, 5] });
+    expect(routine("every night at 10")).toEqual({ type: "daily", time: "22:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("every night at 12")).toEqual({ type: "daily", time: "00:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("every night at 2")).toEqual({ type: "daily", time: "02:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("every evening at 19:30")).toEqual({ type: "daily", time: "19:30", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("every evening at 7am")).toEqual({ type: "daily", time: "07:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
+    expect(routine("every morning at 7")).toEqual({ type: "daily", time: "07:00", weekdays: [0, 1, 2, 3, 4, 5, 6] });
     expect(routine("every 2 hours")).toBe("its schedule could not be read");
     // An event routine stays out even when its words name a time.
     expect(routine("When an email arrives on weekdays at 9am")).toBe("it starts on an event, not a clock");

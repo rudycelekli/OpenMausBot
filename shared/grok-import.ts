@@ -310,6 +310,13 @@ function simpleDaily(text: string): PackageRoutineSchedule | null {
     if (half && (hour < 1 || hour > 12)) return null;
     if (half === "p" && hour < 12) hour += 12;
     if (half === "a" && hour === 12) hour = 0;
+    if (!half && hour >= 1 && hour <= 12) {
+      const later = /\b(?:afternoons?|evenings?|tonight)\b/.test(lower);
+      const night = /\bnights?\b/.test(lower);
+      if (later && hour < 12) hour += 12;
+      else if (night && hour === 12) hour = 0;
+      else if (night && hour >= 6) hour += 12;
+    }
   } else return null;
   if (hour > 23 || minute > 59) return null;
   let weekdays: number[] = [];
