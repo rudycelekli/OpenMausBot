@@ -28,10 +28,7 @@ export function plainPreviewText(text: string): string {
   out = out.replace(/^[ \t]{0,3}(?:[-*_][ \t]*){3,}$/gm, "");
   out = out.replace(/^[ \t]*\|(.*)\|[ \t]*$/gm, (_row, cells: string) => cells.split("|").map((cell) => cell.trim()).filter(Boolean).join(" "));
   // Underscores inside a word (snake_case) and a lone * (2 * 3) are not emphasis.
-  out = out.replace(/(\*{1,3}|_{1,3})(?=\S)([\s\S]*?\S)\1(?![\p{L}\p{N}])/gu, (match, marks: string, inner: string, offset: number, whole: string) => {
-    if (marks[0] === "_" && offset > 0 && /[\p{L}\p{N}]/u.test(whole[offset - 1]!)) return match;
-    return inner;
-  });
+  out = out.replace(/(\*{1,3}|(?<![\p{L}\p{N}_])_{1,3})(?=\S)([\s\S]*?\S)\1(?![\p{L}\p{N}])/gu, "$2");
   out = out.replace(/~~(?=\S)([\s\S]*?\S)~~/g, "$1");
   out = out.replace(/\*\*+|`{3,}|~~/g, "");
   out = out.replace(/\uE002(\d+)\uE003/g, (_match, index: string) => code[Number(index)] ?? "");

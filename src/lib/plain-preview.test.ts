@@ -27,12 +27,14 @@ describe("plainPreviewText", () => {
     ["Run `a\\*b` here", "Run a\\*b here"],
     ["~~~\n# not a heading\n- not a list\n~~~\nafter", "# not a heading - not a list after"],
     ["![plot](/charts/a_(b).png) attached", "plot attached"],
+    ["Renamed user_id and _also_ the cache", "Renamed user_id and also the cache"],
+    ["Set max_retries, then __restart__ it", "Set max_retries, then restart it"],
   ])("reads %j as plain text", (input, expected) => {
     expect(plainPreviewText(input)).toBe(expected);
   });
 
   it("leaves text without markdown alone", () => {
-    for (const text of ["snake_case_name stays", "2 * 3 = 6", "price is $5 * 2", "C# and F# are fine", "use a_b_c here", "Done."]) {
+    for (const text of ["snake_case_name stays", "2 * 3 = 6", "price is $5 * 2", "C# and F# are fine", "use a_b_c here", "file__name__x", "Done."]) {
       expect(plainPreviewText(text)).toBe(text);
     }
   });
