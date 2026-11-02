@@ -144,6 +144,14 @@ describe("pasting anything else", () => {
     });
   });
 
+  it("moves a docker -e value written in the same argument out of the arguments too", () => {
+    expect(one("docker run -i --rm --env=GITHUB_TOKEN=ghp_secret -eMODE=fast -e=REGION=eu --env-file ./x.env ghcr.io/acme/github-mcp-server")).toEqual({
+      transport: "stdio", name: "github", command: "docker",
+      args: ["run", "-i", "--rm", "--env", "GITHUB_TOKEN", "-e", "MODE", "-e", "REGION", "--env-file", "./x.env", "ghcr.io/acme/github-mcp-server"],
+      env: [{ name: "GITHUB_TOKEN", value: "ghp_secret" }, { name: "MODE", value: "fast" }, { name: "REGION", value: "eu" }],
+    });
+  });
+
   it("says plainly that garbage isn't a server, and never echoes a value it read", () => {
     for (const garbage of ["hello world", "please connect my server", "rm -rf /", "claude --help", "git clone https://example.com/x.git", "claude mcp list", "npm install", "{}", "[1, 2]", "{\"mcpServers\": {\"a\": 5}}"]) {
       expect(readMcpPaste(garbage), garbage).toEqual({ ok: false, error: "mcp.paste.notRecognized" });

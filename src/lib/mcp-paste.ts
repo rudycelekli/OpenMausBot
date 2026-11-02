@@ -217,6 +217,15 @@ function fromLauncher(words: string[]): PastedMcpServer {
   return { transport: "stdio", name: packageName(packageArg), command, args, env };
 }
 
+// Docker's CLI also takes `--env=KEY=value`, `-e=KEY=value` and `-eKEY=value`.
+const DOCKER_ENV_ATTACHED = /^(?:--env=|-e=?)(?=.)/;
+
+function dockerEnv(pair: string, env: PastedSecret[]): string {
+  const name = pair.split("=")[0]!;
+  env.push(pair.includes("=") ? envSecret(pair) : { name, value: "", gap: { kind: "variable", names: [name], before: "", after: "" } });
+  return name;
+}
+
 const DOCKER_FLAGS = new Set(["-i", "-t", "-it", "-ti", "-d", "--rm", "--init", "--interactive", "--tty", "--detach", "--privileged"]);
 
 /** Security: `-e KEY=value` would show the value in the listing's arguments, so it moves to the write-only environment
@@ -230,10 +239,9 @@ function dockerServer(args: string[], env: PastedSecret[]): PastedMcpServer {
       image ??= arg;
       out.push(arg);
     } else if ((arg === "-e" || arg === "--env") && i + 1 < args.length) {
-      const pair = args[++i]!;
-      const name = pair.split("=")[0]!;
-      env.push(pair.includes("=") ? envSecret(pair) : { name, value: "", gap: { kind: "variable", names: [name], before: "", after: "" } });
-      out.push(arg, name);
+      out.push(arg, dockerEnv(args[++i]!, env));
+    } else if (DOCKER_ENV_ATTACHED.test(arg)) {
+      out.push(arg.startsWith("--") ? "--env" : "-e", dockerEnv(arg.replace(DOCKER_ENV_ATTACHED, ""), env));
     } else if (arg.includes("=") || DOCKER_FLAGS.has(arg) || i + 1 >= args.length) {
       out.push(arg);
     } else {
