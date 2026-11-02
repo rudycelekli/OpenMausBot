@@ -126,6 +126,20 @@ describe("tidy plan", () => {
     expect(archived).toEqual(["- 2026-09-01 · Exams this weekend · until 2026-09-07 · expired 2026-09-25"]);
   });
 
+  it("treats an entry with lines under it as one fact: compared whole, removed whole", () => {
+    const deploy = (date: string, command: string) => [`- ${date} · Deploy the API with:`, "  ```sh", `  ${command}`, "  ```"];
+    const distinct = ["# Memory", ...deploy("2026-09-01", "railway up"), "- 2026-09-02 · Likes tea", ...deploy("2026-09-03", "fly deploy")].join("\n");
+    expect(planTidy(distinct, TODAY).duplicates).toEqual([]);
+    const repeated = ["# Memory", ...deploy("2026-09-01", "railway up"), "- 2026-09-02 · Likes tea", ...deploy("2026-09-03", "railway up")].join("\n");
+    const plan = planTidy(repeated, TODAY);
+    expect(plan.duplicates.map((e) => e.date)).toEqual(["2026-09-01"]);
+    expect(applyTidy(repeated, plan, TODAY).text).toBe(["# Memory", "- 2026-09-02 · Likes tea", ...deploy("2026-09-03", "railway up")].join("\n"));
+    const expiring = ["- 2026-09-01 · Deploy this week with: · until 2026-09-07", "  ```sh", "  railway up", "  ```", "- 2026-09-02 · Likes tea"].join("\n");
+    const tidied = applyTidy(expiring, planTidy(expiring, TODAY), TODAY);
+    expect(tidied.text).toBe("- 2026-09-02 · Likes tea");
+    expect(tidied.archived).toEqual(["- 2026-09-01 · Deploy this week with: · until 2026-09-07 · expired 2026-09-25\n  ```sh\n  railway up\n  ```"]);
+  });
+
   it("changes no contradiction at all below five entries, and at most a fifth above", () => {
     expect(contradictionBudget(1)).toBe(0);
     expect(contradictionBudget(4)).toBe(0);
