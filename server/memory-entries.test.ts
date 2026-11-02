@@ -134,6 +134,17 @@ describe("memory with until dates and topics, on disk", () => {
     expect(after?.expired).toBe(1);
   });
 
+  it("hides a multi-line entry, every line of it, after the until day written on its last line", () => {
+    const now = new Date(2026, 8, 10, 12);
+    const ok = updateMemory(BOT, { action: "append", text: "Deploy this week with:\n```sh\nrailway up\n```", until: "2026-09-14" }, { now });
+    expect(ok).toMatchObject({ ok: true, entry: "- 2026-09-10 · Deploy this week with:\n  ```sh\n  railway up\n  ``` · until 2026-09-14" });
+    updateMemory(BOT, { action: "append", text: "Likes tea" }, { now });
+    expect(loadMemory(BOT, { now: new Date(2026, 8, 14, 23) })?.text).toContain("railway up");
+    const after = loadMemory(BOT, { now: new Date(2026, 8, 15, 1) });
+    expect(after?.text).toBe("- 2026-09-10 · Likes tea\n");
+    expect(after?.expired).toBe(1);
+  });
+
   it("lists topic notes with their aliases in the prompt, and search finds a topic by alias", () => {
     ensureWorkspace(BOT);
     writeMemoryFile(BOT, "- 2026-09-10 · Likes tea\n");

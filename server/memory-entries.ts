@@ -55,7 +55,7 @@ export function parseMemoryEntries(text: string): MemoryEntryLine[] {
     }
     const rest = m[3];
     const struck = rest.startsWith("~~");
-    const until = UNTIL_MARK.exec(rest)?.[1] ?? null;
+    const until = UNTIL_MARK.exec(rest)?.[1] ?? (end - 1 > line ? UNTIL_MARK.exec(lines[end - 1])?.[1] : undefined) ?? null;
     const body = rest.replace(TRAILING_MARKS, "").replace(/^~~/, "").replace(/~~$/, "").trim();
     out.push({ line, end, raw, prefix: m[1], body, date: m[2], until, struck });
     line = end;
@@ -68,9 +68,10 @@ export function isExpired(entry: Pick<MemoryEntryLine, "until" | "struck">, toda
 }
 
 export function withoutExpired(text: string, today: string): { text: string; hidden: number } {
-  const expired = new Set(parseMemoryEntries(text).filter((e) => isExpired(e, today)).map((e) => e.line));
-  if (!expired.size) return { text, hidden: 0 };
-  return { text: text.split("\n").filter((_, index) => !expired.has(index)).join("\n"), hidden: expired.size };
+  const entries = parseMemoryEntries(text).filter((e) => isExpired(e, today));
+  if (!entries.length) return { text, hidden: 0 };
+  const expired = new Set(entries.flatMap((e) => Array.from({ length: e.end - e.line }, (_, offset) => e.line + offset)));
+  return { text: text.split("\n").filter((_, index) => !expired.has(index)).join("\n"), hidden: entries.length };
 }
 
 /** Deliberately narrow: `-10` and `10`, `C++` and `C`, `API_KEY` and `api_key` stay different facts. */
