@@ -162,12 +162,19 @@ export function createCursorSession(options: { dataDir: string; fetcher?: typeof
     token = accessToken;
     refresh = refreshToken;
   };
+  const expired = () => {
+    const exp = token ? tokenExpiry(token) : undefined;
+    return exp !== undefined && exp * 1000 <= now();
+  };
+  const expire = () => {
+    forget();
+    lastError = "Your Cursor sign-in expired. Sign in again.";
+  };
+  /** An expired token still counts while a refresh token can renew it. */
   const signedIn = () => {
     if (!token) return false;
-    const exp = tokenExpiry(token);
-    if (exp !== undefined && exp * 1000 <= now()) {
-      forget();
-      lastError = "Your Cursor sign-in expired. Sign in again.";
+    if (expired() && !refresh) {
+      expire();
       return false;
     }
     return true;
@@ -261,6 +268,7 @@ export function createCursorSession(options: { dataDir: string; fetcher?: typeof
       forget();
     },
     async fetchTemplate(card) {
+      if (signedIn() && expired() && !(await renew())) expire();
       if (!signedIn()) throw new CursorFallback(lastError || "Sign in with Cursor to import everything at once.");
       const ask = async () => {
         let response: Response;

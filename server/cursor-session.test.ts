@@ -249,6 +249,38 @@ describe("Cursor template import", () => {
     expect(redactSecretsInText(`a refresh-2 b`)).not.toContain("refresh-2");
   });
 
+  it("renews an access token that expired with the refresh token from sign-in, instead of signing out", async () => {
+    const SHORT = jwt(1_800_000_000 + 3_600);
+    const FRESH = jwt(4_102_444_801);
+    const h = harness((call) => {
+      if (call.url.startsWith("https://api2.cursor.sh/auth/poll")) return json({ accessToken: SHORT, refreshToken: "refresh-value" });
+      if (call.url === "https://api2.cursor.sh/oauth/token") return json({ access_token: FRESH });
+      return cursorServer()(call);
+    });
+    await signIn(h);
+    h.tick(2 * 3_600_000);
+    expect(await h.session.status()).toEqual({ signedIn: true, waiting: false });
+    await expect(h.session.fetchTemplate(card)).resolves.toBeTruthy();
+    expect(h.calls.filter((call) => call.url === "https://api2.cursor.sh/oauth/token")).toHaveLength(1);
+    const details = h.calls.filter((call) => call.url.endsWith("/GetGrokBotTemplateImportDetails"));
+    expect(details.map((call) => header(call, "authorization"))).toEqual([`Bearer ${FRESH}`]);
+    expect(JSON.parse(readFileSync(h.file, "utf8"))).toMatchObject({ accessToken: FRESH, refreshToken: "refresh-value" });
+  });
+
+  it("signs out an expired token whose refresh Cursor refuses", async () => {
+    const h = harness((call) => {
+      if (call.url.startsWith("https://api2.cursor.sh/auth/poll")) return json({ accessToken: jwt(1_800_000_000 + 3_600), refreshToken: "refresh-value" });
+      if (call.url === "https://api2.cursor.sh/oauth/token") return json({ error: "invalid_grant" }, 400);
+      return cursorServer()(call);
+    });
+    await signIn(h);
+    h.tick(2 * 3_600_000);
+    await expect(h.session.fetchTemplate(card)).rejects.toThrow(new CursorFallback("Your Cursor sign-in expired. Sign in again."));
+    expect(h.calls.filter((call) => call.url.endsWith("/GetGrokBotTemplateImportDetails"))).toHaveLength(0);
+    expect(existsSync(h.file)).toBe(false);
+    expect(await h.session.status()).toMatchObject({ signedIn: false });
+  });
+
   it("takes an inline recipe or a grokbot-bundle/v1 straight from the details", async () => {
     const bundle = { format: "grokbot-bundle/v1", persona: { name: "Side", description: "Be the side chat." }, memories: [], skills: [], routines: [], plugins: [] };
     const h = harness(cursorServer({ details: () => json({ recipe: bundle }) }));
