@@ -79,8 +79,8 @@ export function applyTidy(text: string, plan: TidyPlan, today: string): { text: 
   const lines = text.split("\n");
   const drop = new Set<number>([...plan.expired, ...plan.duplicates].map((e) => e.line));
   for (const { loser, remainder } of plan.superseded) {
-    const struck = `${loser.prefix}~~${loser.body}~~ · superseded ${today}`;
-    lines[loser.line] = remainder ? `${struck}\n- ${today} · from tidy-up · ${remainder}` : struck;
+    lines[loser.line] = `${loser.prefix}~~${loser.body}~~ · superseded ${today}`;
+    if (remainder) lines[loser.end - 1] += `\n- ${today} · from tidy-up · ${remainder}`;
   }
   const archived = plan.expired.map((e) => `${e.raw} · expired ${today}`);
   return { text: lines.filter((_, index) => !drop.has(index)).join("\n"), archived };

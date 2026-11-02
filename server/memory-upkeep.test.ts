@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { DATA_DIR } from "./config.ts";
 import { CaptureBuffer, capturePrompt, newCandidates, parseCandidates, topicFileName, type CaptureTurn } from "./memory-capture.ts";
-import { passageMatcher } from "./memory-entries.ts";
+import { passageMatcher, withoutSuperseded } from "./memory-entries.ts";
 import { mergeTopicText, parseTopicHeader } from "./memory-topics.ts";
 import { applyMoves, MAX_MOVES, organizeCandidates, ORGANIZE_MARKER, parseMoves } from "./memory-organize.ts";
 import { flushMemoryJournal, readMemoryJournal } from "./memory-journal.ts";
@@ -155,6 +155,20 @@ describe("tidy plan", () => {
     const next = applyTidy(text, planTidy(text, TODAY, pairs), TODAY).text.split("\n");
     expect(next[0]).toBe("- 2026-09-01 · ~~Lives in Pune and prefers short replies~~ · superseded 2026-09-25");
     expect(next[1]).toBe("- 2026-09-25 · from tidy-up · Prefers short replies");
+  });
+
+  it("adds the still-true part after a struck entry's lines, not inside them", () => {
+    const text = ["- 2026-09-01 · Deploys from Pune with:", "  ```sh", "  railway up", "  ```", "- 2026-09-02 · Likes tea", "- 2026-09-03 · Has a dog", "- 2026-09-04 · Drives a Honda", "- 2026-09-10 · Deploys from Mumbai"].join("\n");
+    const pairs = parseContradictions('{"pairs":[{"a":0,"b":4,"keep":"b","remainder":"Deploys with railway up"}]}', 5);
+    const next = applyTidy(text, planTidy(text, TODAY, pairs), TODAY).text;
+    expect(next.split("\n").slice(0, 5)).toEqual([
+      "- 2026-09-01 · ~~Deploys from Pune with:~~ · superseded 2026-09-25",
+      "  ```sh",
+      "  railway up",
+      "  ```",
+      "- 2026-09-25 · from tidy-up · Deploys with railway up",
+    ]);
+    expect(withoutSuperseded(next)).not.toContain("```");
   });
 
   it("ignores malformed or out-of-range contradiction answers", () => {
