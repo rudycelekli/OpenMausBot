@@ -117,7 +117,7 @@ export function servicePlan(platform: NodeJS.Platform, dataDir: string, home = h
     return {
       file: join(dataDir, SYSTEMD_UNIT_NAME),
       installed,
-      activate: [`sudo install -m 644 ${join(dataDir, SYSTEMD_UNIT_NAME)} ${installed}`, "sudo systemctl daemon-reload", `sudo systemctl enable --now ${basename(SYSTEMD_UNIT_NAME, ".service")}`],
+      activate: [`sudo install -m 644 ${shellArg(join(dataDir, SYSTEMD_UNIT_NAME))} ${installed}`, "sudo systemctl daemon-reload", `sudo systemctl enable --now ${basename(SYSTEMD_UNIT_NAME, ".service")}`],
       deactivate: [`sudo systemctl disable --now ${basename(SYSTEMD_UNIT_NAME, ".service")}`, `sudo rm ${installed}`, "sudo systemctl daemon-reload"],
     };
   }
@@ -126,8 +126,8 @@ export function servicePlan(platform: NodeJS.Platform, dataDir: string, home = h
     return {
       file: join(dataDir, `${LAUNCHD_LABEL}.plist`),
       installed,
-      activate: [`mkdir -p ${dirname(installed)} && cp ${join(dataDir, `${LAUNCHD_LABEL}.plist`)} ${installed}`, `launchctl bootstrap gui/$(id -u) ${installed}`],
-      deactivate: [`launchctl bootout gui/$(id -u)/${LAUNCHD_LABEL}`, `rm ${installed}`],
+      activate: [`mkdir -p ${shellArg(dirname(installed))} && cp ${shellArg(join(dataDir, `${LAUNCHD_LABEL}.plist`))} ${shellArg(installed)}`, `launchctl bootstrap gui/$(id -u) ${shellArg(installed)}`],
+      deactivate: [`launchctl bootout gui/$(id -u)/${LAUNCHD_LABEL}`, `rm ${shellArg(installed)}`],
     };
   }
   return null;

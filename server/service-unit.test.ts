@@ -59,6 +59,18 @@ describe("service units", () => {
     expect(servicePlan("win32", "C:\\x")).toBeNull();
   });
 
+  it("quotes a data dir or home with a space in the commands it prints", () => {
+    const linux = servicePlan("linux", "/srv/omb data");
+    expect(linux?.activate[0]).toBe("sudo install -m 644 '/srv/omb data/openmausbot.service' /etc/systemd/system/openmausbot.service");
+    const mac = servicePlan("darwin", "/Users/maus/Library/Application Support/OpenMausBot", "/Users/Maus Home");
+    expect(mac?.activate).toEqual([
+      "mkdir -p '/Users/Maus Home/Library/LaunchAgents' && cp '/Users/maus/Library/Application Support/OpenMausBot/com.openmausbot.serve.plist' '/Users/Maus Home/Library/LaunchAgents/com.openmausbot.serve.plist'",
+      "launchctl bootstrap gui/$(id -u) '/Users/Maus Home/Library/LaunchAgents/com.openmausbot.serve.plist'",
+    ]);
+    expect(mac?.deactivate[1]).toBe("rm '/Users/Maus Home/Library/LaunchAgents/com.openmausbot.serve.plist'");
+    expect(servicePlan("darwin", "/Users/maus/.openmausbot", "/Users/maus")?.activate[1]).toBe("launchctl bootstrap gui/$(id -u) /Users/maus/Library/LaunchAgents/com.openmausbot.serve.plist");
+  });
+
   it("renders Sentinel as a launchd agent on an interval, under its own label, logging outside the data dir", () => {
     const out = "/Users/maus/Library/Application Support/openmausbot-sentinel";
     const sentinel = { node: "/usr/bin/node", script: "/usr/lib/node_modules/openmausbot/cli.js", dataDir: "/Users/maus/.openmausbot", home: "/Users/maus", out };
