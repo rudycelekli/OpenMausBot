@@ -4779,6 +4779,7 @@
   "automations.when.everyHour": "Every hour",
   "automations.when.everyHours": "Every {count} hours",
   "automations.when.onWeekdays": "{when} on weekdays",
+  "automations.when.onDays": "{when} on {days}",
   "automations.when.between": "{when}, {start}–{end}",
   "automations.when.once": "On {date} at {time}",
   "automations.when.custom": "On a custom schedule",

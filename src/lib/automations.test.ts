@@ -67,6 +67,8 @@ describe("the plain sentence", () => {
     expect(plainWhen({ type: "daily", time: "17:30", weekdays: [5] })).toBe("Every Friday at 5:30 PM");
     expect(plainWhen({ type: "interval", everyMinutes: 30, anchorAt: 0 })).toBe("Every 30 minutes");
     expect(plainWhen({ type: "interval", everyMinutes: 120, anchorAt: 0, weekdays: [1, 2, 3, 4, 5] })).toBe("Every 2 hours on weekdays");
+    expect(plainWhen({ type: "interval", everyMinutes: 60, anchorAt: 0, weekdays: [0, 6] })).toBe("Every hour on Sunday and Saturday");
+    expect(plainWhen({ type: "interval", everyMinutes: 30, anchorAt: 0, weekdays: [0, 1, 2, 3, 4, 5, 6] })).toBe("Every 30 minutes");
   });
 });
 

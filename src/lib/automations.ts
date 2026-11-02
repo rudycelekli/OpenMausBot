@@ -140,7 +140,11 @@ export function plainWhen(schedule: RoutineSchedule): string {
     let when = minutes === 60 ? t("automations.when.everyHour")
       : minutes % 60 === 0 ? t("automations.when.everyHours", { count: minutes / 60 })
         : t("automations.when.everyMinutes", { count: minutes });
-    if (schedule.weekdays?.join(",") === "1,2,3,4,5") when = t("automations.when.onWeekdays", { when });
+    const days = schedule.weekdays;
+    if (days?.join(",") === "1,2,3,4,5") when = t("automations.when.onWeekdays", { when });
+    else if (days?.length && days.length < 7) {
+      when = t("automations.when.onDays", { when, days: new Intl.ListFormat(locale(), { type: "conjunction" }).format(days.map((day) => dayName(day, "long"))) });
+    }
     if (schedule.window) when = t("automations.when.between", { when, start: atClock(schedule.window.start), end: atClock(schedule.window.end) });
     return when;
   }
