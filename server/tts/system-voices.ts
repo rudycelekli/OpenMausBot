@@ -17,15 +17,19 @@ export type Runner = (file: string, args: string[], timeout: number) => Promise<
 
 const defaultRun: Runner = (file, args, timeout) => execFileAsync(file, args, { timeout, maxBuffer: 4 * 1024 * 1024 });
 
-/** The header above `say -v ?`'s table is localized, so anything without the `name  lang  # sample` shape is ignored. */
+/** The header above `say -v ?`'s table is localized, so anything without the `name lang # sample` shape is ignored. `say`
+ * pads names to 20 columns, so a longer one ("Eddy (German (Germany))" on macOS 27) is followed by a single space; it lists
+ * some voices twice. */
 export function parseVoiceList(stdout: string): Voice[] {
   const voices: Voice[] = [];
+  const seen = new Set<string>();
   for (const line of stdout.split("\n")) {
-    const match = /^(.+?)\s{2,}(\S+)\s+#\s*(.+)$/.exec(line.trimEnd());
+    const match = /^(.+?)\s+(\S+)\s+#\s*(.+)$/.exec(line.trimEnd());
     if (!match) continue;
     const [, name, locale, sample] = match;
     const id = name.trim();
-    if (!id) continue;
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
     voices.push({ id, label: id, description: `${locale} — ${sample.trim()}` });
   }
   return voices;
