@@ -63,8 +63,9 @@ export function speakable(input: string): string {
   text = text.replace(/^\s*>\s?/gm, "");
   text = text.replace(/^\s*(?:[-*_]\s*){3,}$/gm, "");
 
-  text = text.replace(/(\*\*|__)(.*?)\1/g, "$2");
-  text = text.replace(/(\*|_)(?=\S)(.*?)(?<=\S)\1/g, "$2");
+  // Markdown reads an underscore inside a word as a letter (snake_case), never as emphasis.
+  text = text.replace(/\*\*(.*?)\*\*|(?<![\p{L}\p{N}_])__(.*?)__(?![\p{L}\p{N}_])/gu, "$1$2");
+  text = text.replace(/\*(?=\S)(.*?)(?<=\S)\*|(?<![\p{L}\p{N}_])_(?=\S)(.*?)(?<=\S)_(?![\p{L}\p{N}_])/gu, "$1$2");
   text = text.replace(/~~(.*?)~~/g, "$1");
 
   text = text.replace(/\[[ xX]\]\s*/g, "");

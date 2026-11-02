@@ -57,6 +57,11 @@ describe("speakable", () => {
     expect(speakable("**Done** ✅ — [x] shipped the _thing_")).toBe("Done — shipped the thing");
   });
 
+  it("keeps the underscores inside snake_case names", () => {
+    expect(speakable("Set max_retry_count in `retry_policy.ts`, then _rerun_ it")).toBe("Set max_retry_count in retry_policy.ts, then rerun it");
+    expect(speakable("**Bold** and __init__ stay readable")).toBe("Bold and init stay readable");
+  });
+
   it("gives a heading a full stop so the voice breathes", () => {
     expect(speakable("## Results\nAll green")).toBe("Results. All green");
   });
